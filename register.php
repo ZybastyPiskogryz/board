@@ -8,7 +8,7 @@
 <body>
 
 <?php
-
+$remove = false;
 $afterregistration = false;
 // Получаем данные из формы (правильные имена)
 $name = trim(htmlentities($_POST["name"] ?? ''));
@@ -25,14 +25,21 @@ if (isset($_POST['press'])){
             $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            $stmt = $db->query("SELECT * FROM Users");
+            $stmt = $db->prepare("SELECT * FROM Users WHERE name = ?"); //последнее изменение
+            $stmt->execute([$name]);                                    //безопасность+
             $usersSQlite = $stmt->fetchAll();
 
             $found = false;
+                    $_SESSION["nameSESSION"] = $name;
+                    $_SESSION["passSESSION"] = $pass;
 
             foreach ($usersSQlite as $user) {
                 if ($user['name'] === $name && $user['pass'] === $pass) {
                     $found = true;
+
+
+                    $afterregistration = true;
+
                     break;
                 }
             }
@@ -47,6 +54,8 @@ if (isset($_POST['press'])){
                     }
                 </script>
                 <?php
+                $_SESSION['remove'] = true;
+
                 exit; 
             } else {
                 $stmt = $db->prepare("
@@ -55,6 +64,7 @@ if (isset($_POST['press'])){
                 ");
                 $stmt->execute([$name, $pass]);
                 $afterregistration = true;
+
                 header('Location: board.php');
                 exit;
             } 
@@ -64,17 +74,14 @@ if (isset($_POST['press'])){
     } // Здесь закрывается else
 } // Здесь закрывается isset
 
-function fromArray()
-{
-    // foreach ($usersArray as $tosqlite){
 
-    // }
-};
 
-if (isset($_SESSION["nameSESSION"]) && isset($_SESSION["passSESSION"]))
-{
-    header('Location: board.php');
-        exit;
+if ($_SESSION['remove']){
+    if (isset($_SESSION["nameSESSION"]) && isset($_SESSION["passSESSION"]))
+    {
+        header('Location: board.php');
+            exit;
+    }
 }
 
 
